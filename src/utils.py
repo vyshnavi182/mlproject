@@ -21,6 +21,15 @@ def save_object(file_path, obj):
         raise CustomException(e, sys)
 
 
+def load_object(file_path):
+    try:
+        with open(file_path, "rb") as file_obj:
+            return dill.load(file_obj)
+
+    except Exception as e:
+        raise CustomException(e, sys)
+
+
 def evaluate_models(
     X_train,
     y_train,
@@ -30,15 +39,19 @@ def evaluate_models(
     params
 ):
     try:
+
         report = {}
 
         for model_name in models:
 
             model = models[model_name]
-            param_grid = params.get(model_name, {})
 
-            # If hyperparameters are provided,
-            # perform RandomizedSearchCV
+            param_grid = params.get(
+                model_name,
+                {}
+            )
+
+            # Hyperparameter tuning
             if param_grid:
 
                 random_search = RandomizedSearchCV(
@@ -51,43 +64,61 @@ def evaluate_models(
                     n_jobs=-1
                 )
 
-                random_search.fit(X_train, y_train)
+                random_search.fit(
+                    X_train,
+                    y_train
+                )
 
                 # Get the best tuned model
                 best_model = random_search.best_estimator_
 
-                # Replace original model with tuned model
+                # Update model dictionary
                 models[model_name] = best_model
 
             else:
-                # No hyperparameters to tune
-                model.fit(X_train, y_train)
+
+                # Train model directly
+                model.fit(
+                    X_train,
+                    y_train
+                )
+
                 best_model = model
 
-            # Predictions
-            y_train_pred = best_model.predict(X_train)
-            y_test_pred = best_model.predict(X_test)
+            # Predictions on training data
+            y_train_pred = best_model.predict(
+                X_train
+            )
 
-            # R2 scores
+            # Predictions on test data
+            y_test_pred = best_model.predict(
+                X_test
+            )
+
+            # Training R2 score
             train_model_score = r2_score(
                 y_train,
                 y_train_pred
             )
 
+            # Testing R2 score
             test_model_score = r2_score(
                 y_test,
                 y_test_pred
             )
 
             print(model_name)
+
             print(
                 "Train R2 Score:",
                 round(train_model_score, 4)
             )
+
             print(
                 "Test R2 Score:",
                 round(test_model_score, 4)
             )
+
             print("-" * 50)
 
             # Store test score
