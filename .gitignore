@@ -16,7 +16,13 @@ __pycache__/
 
 # Environment variables / secrets
 .env
-.artifacts
+
+# Artifacts
+artifacts/
+
+# CatBoost generated files
+catboost_info/
+
 # Logs
 *.log
 
